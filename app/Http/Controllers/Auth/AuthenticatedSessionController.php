@@ -29,11 +29,24 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        try {
+            $request->authenticate();
 
-        $request->session()->regenerate();
+            $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+            return redirect()->intended(route('dashboard', absolute: false));
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Login failed: ' . $e->getMessage(), [
+                'email' => $request->get('email'),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Return back with a generic error message
+            return back()->withErrors([
+                'email' => 'Login failed. Please check your credentials and try again.',
+            ])->onlyInput('email');
+        }
     }
 
     /**

@@ -37,12 +37,18 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+        // Safely handle inspiring quotes with fallback
+        try {
+            [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+            $quote = ['message' => trim($message), 'author' => trim($author)];
+        } catch (\Exception $e) {
+            $quote = ['message' => 'Every expert was once a beginner.', 'author' => 'Helen Hayes'];
+        }
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'quote' => ['message' => trim($message), 'author' => trim($author)],
+            'quote' => $quote,
             'auth' => [
                 'user' => $request->user(),
             ],
